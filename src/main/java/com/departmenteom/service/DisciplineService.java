@@ -241,10 +241,11 @@ public class DisciplineService {
                 personalTasksList = updatePersonalTasks(fullDisciplineData.getPersonalTaskList(), discipline);
                 discipline.setPersonalTasksSet(personalTasksList);
             }
-//            if (fullDisciplineData.getReporting() != null) {
-//                Reporting reporting = saveReporting(fullDisciplineData.getReporting(), discipline);
-//                discipline.setReporting(reporting);
-//            }
+
+            if (fullDisciplineData.getReporting() != null) {
+                Reporting reporting = updateReporting(fullDisciplineData.getReporting(), discipline);
+                discipline.setReporting(reporting);
+            }
         } else {
             log.info("save new");
             discipline = saveDiscipline(fullDisciplineData);
@@ -373,4 +374,15 @@ public class DisciplineService {
 
         return reporting;
     }
+
+    private Reporting updateReporting(Reporting reportingForSave, Discipline finalDiscipline) {
+        Reporting reporting = reportingForSave;
+        ReportingForm form = getReportingById(reporting.getDisciplineReportingForm().getId());
+        reporting.setDisciplineReportingForm(form);
+        reporting.setDisciplineReporting(finalDiscipline);
+        saveReporting(reporting);
+
+        return reporting;
+    }
+
 }
