@@ -21,11 +21,14 @@ public class DisciplineType {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "cipher")
+    private String cipher;
+
     @OneToMany(mappedBy = "disciplineType")
     private Set<Discipline> disciplineSet = new HashSet<>();
 
     @Override
     public String toString() {
-        return "DisciplineType(id = " + id +  ", name = " + name + ")";
+        return "DisciplineType(id = " + id +  ", name = " + name + " cipher = " + cipher + ")";
     }
 }

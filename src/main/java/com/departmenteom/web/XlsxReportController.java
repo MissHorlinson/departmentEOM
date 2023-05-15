@@ -6,6 +6,7 @@ import com.departmenteom.service.XlsFileWriteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.util.IOUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -47,12 +48,13 @@ public class XlsxReportController {
         ByteArrayInputStream inputStream = xlsFileWriteService.getPersonalPlan(planId, studentId, course);
         IOUtils.copy(inputStream, response.getOutputStream());
 
+        log.info("Course plan sent to client");
         inputStream.close();
     }
 
     @PostMapping("/readFromFile")
     @PreAuthorize("hasAnyAuthority('depart:write')")
-    public PlanInfoDTO addPlanInSystem(@RequestBody MultipartFile file) {
+    public PlanInfoDTO addPlanInSystem(@RequestBody MultipartFile file, HttpServletResponse response) {
         log.info("name - {}, type - {}, or name - {}", file.getName(), file.getContentType(), file.getOriginalFilename());
         return xlsFileReadService.writeFromFileToSystem(file);
     }

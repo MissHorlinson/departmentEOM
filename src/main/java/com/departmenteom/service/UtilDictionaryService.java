@@ -41,20 +41,12 @@ public class UtilDictionaryService {
 
     public Base getBaseById(Long id) {
         Optional<Base> baseOpt = baseRepo.findById(id);
-        if (baseOpt.isPresent()) {
-            return baseOpt.get();
-        } else {
-            return null;
-        }
+        return baseOpt.orElse(null);
     }
 
     public Base getBaseByName(String name) {
         Optional<Base> baseOpt = baseRepo.getByName(name);
-        if (baseOpt.isPresent()) {
-            return baseOpt.get();
-        } else {
-            return null;
-        }
+        return baseOpt.orElse(null);
     }
 
 
@@ -68,11 +60,7 @@ public class UtilDictionaryService {
 
     public Cipher getCipherById(Long id) {
         Optional<Cipher> cipherOpt = cipherRepo.findById(id);
-        if (cipherOpt.isPresent()) {
-            return cipherOpt.get();
-        } else {
-            return null;
-        }
+        return cipherOpt.orElse(null);
     }
 
     public Cipher saveCipher(Cipher cipher) {
@@ -94,21 +82,13 @@ public class UtilDictionaryService {
     public Department getDepartmentById(Long id) {
         Optional<Department> departmentOpt = departmentRepo.findById(id);
 
-        if (departmentOpt.isPresent()) {
-            return departmentOpt.get();
-        } else {
-            return null;
-        }
+        return departmentOpt.orElse(null);
     }
 
     public Department getDepartmentByName(String departmentName) {
         Optional<Department> departmentOpt = departmentRepo.getByName(departmentName);
 
-        if (departmentOpt.isPresent()) {
-            return departmentOpt.get();
-        } else {
-            return null;
-        }
+        return departmentOpt.orElse(null);
     }
 
     public Department saveDepartment(Department department) {
@@ -129,20 +109,12 @@ public class UtilDictionaryService {
 
     public Qualification getQualificationById(Long id) {
         Optional<Qualification> qualificationOpt = qualificationRepo.findById(id);
-        if (qualificationOpt.isPresent()) {
-            return qualificationOpt.get();
-        } else {
-            return null;
-        }
+        return qualificationOpt.orElse(null);
     }
 
     public Qualification getQualificationByName(String name) {
         Optional<Qualification> qualificationOpt = qualificationRepo.getByName(name);
-        if (qualificationOpt.isPresent()) {
-            return qualificationOpt.get();
-        } else {
-            return null;
-        }
+        return qualificationOpt.orElse(null);
     }
 
 
@@ -156,20 +128,12 @@ public class UtilDictionaryService {
 
     public Step getStepById(Long id) {
         Optional<Step> stepOpt = stepRepo.findById(id);
-        if (stepOpt.isPresent()) {
-            return stepOpt.get();
-        } else {
-            return null;
-        }
+        return stepOpt.orElse(null);
     }
 
     public Step getStepByName(String name) {
         Optional<Step> stepOpt = stepRepo.getByName(name);
-        if (stepOpt.isPresent()) {
-            return stepOpt.get();
-        } else {
-            return null;
-        }
+        return stepOpt.orElse(null);
     }
 
     public Step saveStep(Step step) {
@@ -182,20 +146,12 @@ public class UtilDictionaryService {
 
     public StudyingForm getStudyingFormById(Long id) {
         Optional<StudyingForm> studyingFormOpt = studyingFromRepo.findById(id);
-        if (studyingFormOpt.isPresent()) {
-            return studyingFormOpt.get();
-        } else {
-            return null;
-        }
+        return studyingFormOpt.orElse(null);
     }
 
     public StudyingForm getStudyingFormByName(String name) {
         Optional<StudyingForm> studyingFormOpt = studyingFromRepo.getByName(name);
-        if (studyingFormOpt.isPresent()) {
-            return studyingFormOpt.get();
-        } else {
-            return null;
-        }
+        return studyingFormOpt.orElse(null);
     }
 
     public StudyingForm saveStudyingForm(StudyingForm studyingForm) {
@@ -208,20 +164,12 @@ public class UtilDictionaryService {
 
     public StudyingTerm getStudyingTermById(Long id) {
         Optional<StudyingTerm> studyingTermOpt = studyingTermRepo.findById(id);
-        if (studyingTermOpt.isPresent()) {
-            return studyingTermOpt.get();
-        } else {
-            return null;
-        }
+        return studyingTermOpt.orElse(null);
     }
 
     public StudyingTerm getStudyingTermByName(String name) {
         Optional<StudyingTerm> studyingTermOpt = studyingTermRepo.getByName(name);
-        if (studyingTermOpt.isPresent()) {
-            return studyingTermOpt.get();
-        } else {
-            return null;
-        }
+        return studyingTermOpt.orElse(null);
     }
 
     public StudyingTerm saveStudyingTerm(StudyingTerm studyingTerm) {
@@ -235,11 +183,13 @@ public class UtilDictionaryService {
     public StudyingType getStudyingTypeById(Long id) {
         Optional<StudyingType> studyingTypeOpt = studyingTypeRepo.findById(id);
 
-        if (studyingTypeOpt.isPresent()) {
-            return studyingTypeOpt.get();
-        } else {
-            return null;
-        }
+        return studyingTypeOpt.orElse(null);
+    }
+
+    public StudyingType getStudyingTypeByLetter(String letter) {
+        Optional<StudyingType> studyingTypeOpt = studyingTypeRepo.getByLetter(letter);
+
+        return studyingTypeOpt.orElse(null);
     }
 
     public StudyingType saveStudyingType(StudyingType studyingType) {

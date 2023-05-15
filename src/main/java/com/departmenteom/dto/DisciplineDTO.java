@@ -29,4 +29,5 @@ public class DisciplineDTO {
     private double independentHours;
     private Long independentHoursId;
     private Set<PersonalTasksDTO> personalTaskList;
+    private int subgroupNum;
 }

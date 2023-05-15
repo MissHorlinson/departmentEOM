@@ -107,6 +107,7 @@ public class EntityToDtoConverter {
         return DisciplineTypeDTO.builder()
                 .id(disciplineType.getId())
                 .name(disciplineType.getName())
+                .cipher(disciplineType.getCipher())
                 .build();
     }
 
@@ -242,7 +243,7 @@ public class EntityToDtoConverter {
                 .departmentAbr(discipline.getDepartment().getAbbreviation())
                 .departmentId(discipline.getDepartment().getId())
                 .semester(discipline.getSemester())
-                .cipher(discipline.getCipher())
+                .cipher(discipline.getDisciplineType().getCipher())
                 .disciplineNum(disciplineNum + disciplineSubNum)
                 .plan(discipline.getDisciplinePlanInfo().getId())
                 .reporting(reporting)
@@ -252,6 +253,7 @@ public class EntityToDtoConverter {
                 .independentHours(independentHours)
                 .independentHoursId(independentHoursId)
                 .personalTaskList(personalTasksDTOSet)
+                .subgroupNum(discipline.getSubgroupNum())
                 .build();
     }
 

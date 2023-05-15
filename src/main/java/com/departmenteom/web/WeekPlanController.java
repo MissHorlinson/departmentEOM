@@ -27,4 +27,10 @@ public class WeekPlanController {
     public List<WeekPlanDTO> getListByPlan(@PathVariable Long id) {
         return weekPlanMapper.getListByPlan(id);
     }
+
+    @PostMapping("/delete/{id}")
+    @PreAuthorize("hasAnyAuthority('depart:write')")
+    public void deleteWeekItem(@PathVariable Long id) {
+        weekPlanMapper.deleteWeekItem(id);
+    }
 }

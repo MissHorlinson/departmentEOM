@@ -10,6 +10,4 @@ import java.util.List;
 public interface PlanInfoRepo extends CrudRepository<PlanInfo, Long> {
 
     List<PlanInfo> findAll();
-
-//    Optional<PlanInfo> getByAdmissionYear_YearAndPlanCipher(LocalDateTime admissionYear, Cipher cipher);
 }

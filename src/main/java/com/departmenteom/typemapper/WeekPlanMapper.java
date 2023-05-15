@@ -45,4 +45,8 @@ public class WeekPlanMapper {
         weekPlanList.forEach(item -> weekPlanDTOList.add(EntityToDtoConverter.weekPlanToDto(item)));
         return weekPlanDTOList;
     }
+
+    public void deleteWeekItem(Long id) {
+        weekPlanService.deleteWeekItemById(id);
+    }
 }

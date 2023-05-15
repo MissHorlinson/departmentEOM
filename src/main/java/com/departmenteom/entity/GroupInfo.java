@@ -39,10 +39,4 @@ public class GroupInfo {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "stream_id")
     private GroupStream groupInfoStream;
-
-
-    public Set<Student> addStudent(Student student) {
-        studentSet.add(student);
-        return studentSet;
-    }
 }

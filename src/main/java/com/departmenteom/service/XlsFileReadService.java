@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellReference;
@@ -22,9 +21,9 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +39,9 @@ public class XlsFileReadService {
     private final Map<Integer, String> fullPlanPracticeCellLetterMap = Map.of(1, "V", 2, "Z", 3, "AD", 4, "AH", 5, "AL", 6, "AP", 7, "AT", 8, "AX");
     private final Map<Integer, String> fullPlanIndependentCellLetterMap = Map.of(1, "X", 2, "AB", 3, "AF", 4, "AJ", 5, "AN", 6, "AR", 7, "AV", 8, "AZ");
 
+    private final int COURSE_WEEK_NUM = 52;
+    private final String MAIN_SHEET_NAME = "Титул";
+    private final String DISCIPLINE_SHEET_NAME = "План";
 
     public PlanInfoDTO writeFromFileToSystem(MultipartFile file) {
 
@@ -56,11 +58,26 @@ public class XlsFileReadService {
             }
 
             if (workbook != null) {
-                Sheet titleSheet = workbook.getSheet("Титул");
-                PlanInfo plan = readTitlePage(titleSheet);
-                Sheet disciplineSheet = workbook.getSheetAt(0);
-                readDisciplinePage(disciplineSheet, plan);
-                return EntityToDtoConverter.planInfoToDto(plan);
+                Map<String, Sheet> fileSheet = new HashMap<>();
+                Sheet sheet0 = workbook.getSheetAt(0);
+                Sheet sheet1 = workbook.getSheetAt(1);
+
+                if (sheet0.getSheetName().toLowerCase().contains(MAIN_SHEET_NAME.toLowerCase()) &&
+                        sheet1.getSheetName().toLowerCase().contains(DISCIPLINE_SHEET_NAME.toLowerCase())) {
+                    fileSheet.put(MAIN_SHEET_NAME, sheet0);
+                    fileSheet.put(DISCIPLINE_SHEET_NAME, sheet1);
+                } else if (sheet1.getSheetName().toLowerCase().contains(MAIN_SHEET_NAME.toLowerCase()) &&
+                        sheet0.getSheetName().toLowerCase().contains(DISCIPLINE_SHEET_NAME.toLowerCase())) {
+                    fileSheet.put(MAIN_SHEET_NAME, sheet1);
+                    fileSheet.put(DISCIPLINE_SHEET_NAME, sheet0);
+                } else {
+                    throw new IllegalArgumentException("Wrong file format");
+                }
+
+                    PlanInfo plan = readTitlePage(fileSheet.get(MAIN_SHEET_NAME));
+                    readTableData(fileSheet.get(MAIN_SHEET_NAME), plan);
+//                    readDisciplinePage(fileSheet.get(DISCIPLINE_SHEET_NAME), plan);
+                    return EntityToDtoConverter.planInfoToDto(plan);
             }
         } catch (IOException ex) {
             log.error("Error: ", ex);
@@ -106,6 +123,13 @@ public class XlsFileReadService {
                     SubjectName subjectName = disciplineService.getSubjectNameByName(subjectNameText.strip());
                     log.info("----------------------------------\n  subj - {}", subjectName);
 
+                    if (subjectName == null) {
+                        String nameForSave = subjectNameText.strip().replace("'","`");
+                        SubjectName subject = new SubjectName();
+                        subject.setName(nameForSave);
+                        subjectName = disciplineService.saveSubjectName(subject);
+                    }
+
                     CellReference departmentNameText = new CellReference("C" + i);
                     String departmentName = disciplineSheet.getRow(departmentNameText.getRow()).getCell(departmentNameText.getCol()).getStringCellValue();
                     Department department = utilDictionaryService.getDepartmentByName(departmentName);
@@ -142,9 +166,6 @@ public class XlsFileReadService {
                 }
             }
         }
-
-        List<FullDisciplineData> filteredList = diciplineList.stream().distinct().collect(Collectors.toList());
-        filteredList.forEach(System.out::println);
     }
 
     private List<PersonalTasks> getPersonalTask(int rowNum, int sem, Sheet disciplineSheet, FullDisciplineData fullDisciplineData, PersonalTaskForm project, PersonalTaskForm work) {
@@ -180,41 +201,22 @@ public class XlsFileReadService {
 
 
         if (disciplineSheet.getRow(taskSemesterCell.getRow()).getCell(taskSemesterCell.getCol()) != null) {
+            String cellText = disciplineSheet.getRow(taskSemesterCell.getRow()).getCell(taskSemesterCell.getCol()).toString();
+            char[] personalTaskSemesterList = cellText.replaceAll(" ", "").toCharArray();
 
-            CellType type = getCelltype(disciplineSheet, taskSemesterCell);
+            String taskCellText = disciplineSheet.getRow(taskCell.getRow()).getCell(taskCell.getCol()).toString();
+            String[] reportingList = taskCellText.split(" ");
 
-            if (type == CellType.STRING) {
-                String cellText = disciplineSheet.getRow(taskSemesterCell.getRow()).getCell(taskSemesterCell.getCol()).getStringCellValue();
-                char[] personalTaskSemesterList = cellText.replaceAll(" ", "").toCharArray();
-
-                String taskCellText = disciplineSheet.getRow(taskCell.getRow()).getCell(taskCell.getCol()).getStringCellValue();
-                String[] reportingList = taskCellText.split(" ");
-
-                for (int task = 0; task < personalTaskSemesterList.length; task++) {
-                    if (String.valueOf(personalTaskSemesterList[task]).equals(String.valueOf(sem))) {
-                        fullDisciplineData.setSemester(sem);
-                        PersonalTasks personalTask = new PersonalTasks();
-                        PersonalTaskForm personalTaskForm = disciplineService.getPersonalTaskFormByName(reportingList[task]);
-                        if (personalTaskForm != null) {
-                            personalTask.setPersonalTaskForm(personalTaskForm);
-                            tasksList.add(personalTask);
-                        }
-                        break;
-                    }
-                }
-
-
-            } else if (type == CellType.NUMERIC) {
-                double cellText = disciplineSheet.getRow(taskSemesterCell.getRow()).getCell(taskSemesterCell.getCol()).getNumericCellValue();
-                if (cellText == sem) {
+            for (int task = 0; task < personalTaskSemesterList.length; task++) {
+                if (String.valueOf(personalTaskSemesterList[task]).equals(String.valueOf(sem))) {
                     fullDisciplineData.setSemester(sem);
                     PersonalTasks personalTask = new PersonalTasks();
-
-                    PersonalTaskForm personalTaskForm = disciplineService.getPersonalTaskFormByName(disciplineSheet.getRow(taskCell.getRow()).getCell(taskCell.getCol()).getStringCellValue().strip());
+                    PersonalTaskForm personalTaskForm = disciplineService.getPersonalTaskFormByName(reportingList[task]);
                     if (personalTaskForm != null) {
                         personalTask.setPersonalTaskForm(personalTaskForm);
                         tasksList.add(personalTask);
                     }
+                    break;
                 }
             }
         }
@@ -225,13 +227,10 @@ public class XlsFileReadService {
         String[] disciplineNumArray = text.split(" ");
 
         if (disciplineNumArray[0].equals("ОКП")) {
-            fullDisciplineData.setCipher("ОКП");
             fullDisciplineData.setDisciplineType(proffessional);
         } else if (disciplineNumArray[0].equals("ОКЗ")) {
-            fullDisciplineData.setCipher("ОКЗ");
             fullDisciplineData.setDisciplineType(general);
         } else if (disciplineNumArray[0].equals("ВК")) {
-            fullDisciplineData.setCipher("ВК");
             fullDisciplineData.setDisciplineType(choice);
         }
 
@@ -251,57 +250,36 @@ public class XlsFileReadService {
         Reporting reporting = new Reporting();
 
         if (disciplineSheet.getRow(reportingCell.getRow()).getCell(reportingCell.getCol()) != null) {
-            CellType type = getCelltype(disciplineSheet, reportingCell);
+            String cellText = disciplineSheet.getRow(reportingCell.getRow()).getCell(reportingCell.getCol()).toString();
+            String[] reportingList = cellText.contains(",") ? cellText.split(",") : cellText.split(" ");
 
-            if (type == CellType.STRING) {
-                String cellText = disciplineSheet.getRow(reportingCell.getRow()).getCell(reportingCell.getCol()).getStringCellValue();
-                String[] reportingList = cellText.contains(",") ? cellText.split(",") : cellText.split(" ");
-
-                for (String report : reportingList) {
-                    if (report.contains("д")) {
-                        String dReport = report.replace("д", "");
-                        if (dReport.equals(String.valueOf(sem))) {
-                            log.info("report text - {}", report);
-                            reporting.setDisciplineReportingForm(dReportForm);
-                            break;
-                        }
-                    } else if (report.equals(String.valueOf(sem))) {
+            for (String report : reportingList) {
+                if (report.contains("д")) {
+                    String dReport = report.replace("д", "");
+                    if (dReport.equals(String.valueOf(sem))) {
                         log.info("report text - {}", report);
-                        reporting.setDisciplineReportingForm(reportForm);
+                        reporting.setDisciplineReportingForm(dReportForm);
                         break;
                     }
-                }
-
-            } else if (type == CellType.NUMERIC) {
-                double cellText = disciplineSheet.getRow(reportingCell.getRow()).getCell(reportingCell.getCol()).getNumericCellValue();
-                if (cellText == sem) {
-                    log.info(" report text - {}", cellText);
+                } else if (report.equals(String.valueOf(sem))) {
+                    log.info("report text - {}", report);
                     reporting.setDisciplineReportingForm(reportForm);
+                    break;
                 }
             }
         }
 
 
         if (disciplineSheet.getRow(examCell.getRow()).getCell(examCell.getCol()) != null) {
-            CellType type = getCelltype(disciplineSheet, examCell);
 
-            if (type == CellType.STRING) {
-                String cellText = disciplineSheet.getRow(examCell.getRow()).getCell(examCell.getCol()).getStringCellValue();
-                String[] reportingList = cellText.contains(",") ? cellText.split(",") : cellText.split(" ");
+            String cellText = disciplineSheet.getRow(examCell.getRow()).getCell(examCell.getCol()).toString();
+            String[] reportingList = cellText.contains(",") ? cellText.split(",") : cellText.split(" ");
 
-                for (String report : reportingList) {
-                    if (Integer.parseInt(report.strip()) == sem) {
-                        log.info("exam text - {}", cellText);
-                        reporting.setDisciplineReportingForm(examForm);
-                        break;
-                    }
-                }
-
-            } else if (type == CellType.NUMERIC) {
-                double cellText = disciplineSheet.getRow(examCell.getRow()).getCell(examCell.getCol()).getNumericCellValue();
-                if (cellText == sem) {
+            for (String report : reportingList) {
+                if (report.equals(String.valueOf(sem))) {
                     log.info("exam text - {}", cellText);
                     reporting.setDisciplineReportingForm(examForm);
+                    break;
                 }
             }
         }
@@ -312,10 +290,6 @@ public class XlsFileReadService {
         } else {
             fullDisciplineData.setReporting(reporting);
         }
-    }
-
-    private CellType getCelltype(Sheet sheet, CellReference cellReference) {
-        return sheet.getRow(cellReference.getRow()).getCell(cellReference.getCol()).getCellType();
     }
 
     private List<AuditoryHours> readAuditoryHours(int rowNum, int sem, Sheet disciplineSheet, FullDisciplineData fullDisciplineData, DisciplineForm lectureForm, DisciplineForm labForm, DisciplineForm practiceForm) {
@@ -443,8 +417,32 @@ public class XlsFileReadService {
         planInfo.setAdmissionYear(addmission);
         planInfo.setNumberOfSemester(t.getSemesterNum());
 
-        planInfoService.savePlanData(planInfo);
+//        return planInfo;
+        return planInfoService.savePlanData(planInfo);
+    }
 
-        return planInfo;
+    private void readTableData(Sheet sheet, PlanInfo planInfo) {
+        log.info(planInfo.getStudyingTerm().toString());
+        int courses = (int) Math.ceil(planInfo.getStudyingTerm().getSemesterNum() / 2);
+        log.info("courses {}", courses);
+
+        int startRow = 25;
+
+//        CellReference startWeekCR = new CellReference("F26");
+//        Cell startWeek = sheet.getRow(startWeekCR.getRow()).getCell(startWeekCR.getCol());
+
+        for (int i = 1; i <= courses; i++) {
+            int startColumn = 5;
+            for (int j = 1; j < COURSE_WEEK_NUM; j++) {
+                String letter = sheet.getRow(startRow).getCell(startColumn).toString();
+                log.info("course {}, week {} - {}",i,j, letter);
+                if (!letter.isEmpty()) {
+                    StudyingType type = utilDictionaryService.getStudyingTypeByLetter(letter);
+                    log.info("Type {}", type);
+                }
+                startColumn++;
+            }
+            startRow++;
+        }
     }
 }

@@ -35,8 +35,11 @@ public class Discipline {
     @Column(name = "semester")
     private int semester;
 
-    @Column(name = "cipher")
-    private String cipher;
+    @Column(name = "subgroup_num")
+    private int subgroupNum;
+
+//    @Column(name = "cipher")
+//    private String cipher;
 
     @Column(name = "discipline_num")
     private int disciplineNum;

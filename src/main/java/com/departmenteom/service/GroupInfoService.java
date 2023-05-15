@@ -45,6 +45,7 @@ public class GroupInfoService {
     }
 
     public GroupInfo saveGroup(GroupInfo groupInfo, Long cipherId) {
+        log.info("Crate new group for cipher id {} and year {}", cipherId, groupInfo.getAdmissionYear());
         Optional<GroupStream> groupStreamOpt = groupStreamRepo.getByStreamPlanInfoPlanCipherIdAndStreamPlanInfoAdmissionYear(cipherId, groupInfo.getAdmissionYear());
         Cipher cipher = cipherRepo.getById(cipherId);
         groupInfo.setGroupCipher(cipher);
@@ -55,20 +56,18 @@ public class GroupInfoService {
             GroupStream gs = groupStreamRepo.save(new GroupStream());
             groupInfo.setGroupInfoStream(gs);
         }
-
+        log.info("Created");
         return groupInfoRepo.save(groupInfo);
     }
 
     public GroupInfo getGroupById(Long id) {
+        log.info("Search group by id {}", id);
         Optional<GroupInfo> groupInfoOpt = groupInfoRepo.findById(id);
-        if (groupInfoOpt.isPresent()) {
-            return groupInfoOpt.get();
-        } else {
-            return null;
-        }
+        return groupInfoOpt.orElse(null);
     }
 
     public Optional<GroupInfo> getGroupByYearAndCipherId(LocalDateTime year, long cipherId) {
+        log.info("Check if group exist for {} and cipher id {}", year.getYear(), cipherId);
         return groupInfoRepo.getFirstByAdmissionYearAndGroupCipherId(year, cipherId);
     }
 }

@@ -9,4 +9,5 @@ public class DisciplineTypeDTO {
 
     private Long id;
     private String name;
+    private String cipher;
 }

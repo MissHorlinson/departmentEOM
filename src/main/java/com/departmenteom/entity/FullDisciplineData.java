@@ -24,6 +24,8 @@ public class FullDisciplineData {
     private PlanInfo plan;
     private Reporting reporting;
     private List<AuditoryHours> auditoryHoursList;
+    private List<AuditoryHours> auditoryHoursToRemove;
     private IndependentHours independentHours;
     private List<PersonalTasks> personalTaskList;
+    private int subgroupNum;
 }
